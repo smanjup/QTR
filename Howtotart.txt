@@ -1,0 +1,25 @@
+TimeZoneChecker — how to start
+
+Prerequisites: Python 3.10+, Node.js 18+
+
+BACKEND (FastAPI — required for Convert; Vite proxies /api to port 8001)
+
+  cd TimeZoneChecker\backend
+  python -m venv .venv
+  .venv\Scripts\activate
+  pip install -r requirements.txt
+  uvicorn main:app --reload --port 8001
+
+  API base: http://127.0.0.1:8001
+  Health check: http://127.0.0.1:8001/api/health
+
+FRONTEND (Vite dev server — default port 5174)
+
+  In a second terminal:
+
+  cd TimeZoneChecker\frontend
+  npm install
+  npm run dev
+
+  Open the URL shown in the terminal (e.g. http://localhost:5174).
+  The dev server proxies /api to http://127.0.0.1:8001 — start the backend first or Convert will fail.
