@@ -2,9 +2,11 @@ TimeZoneChecker — how to start
 
 Prerequisites: Python 3.10+, Node.js 18+
 
+Run these from this folder (TimeZoneChecker), or use TimeZoneChecker\backend and TimeZoneChecker\frontend from the repo root.
+
 BACKEND (FastAPI — required for Convert; Vite proxies /api to port 8001)
 
-  cd TimeZoneChecker\backend
+  cd backend
   python -m venv .venv
   .venv\Scripts\activate
   pip install -r requirements.txt
@@ -17,7 +19,7 @@ FRONTEND (Vite dev server — default port 5174)
 
   In a second terminal:
 
-  cd TimeZoneChecker\frontend
+  cd frontend
   npm install
   npm run dev
 
