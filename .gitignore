@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Frontend build output
+dist/
+
 # Python
 __pycache__/
 *.py[cod]
