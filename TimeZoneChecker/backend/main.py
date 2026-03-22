@@ -15,12 +15,28 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 OPEN_METEO_GEO = "https://geocoding-api.open-meteo.com/v1/search"
 
+
+def _zoneinfo(name: str) -> ZoneInfo:
+    """Load IANA zone; needs the ``tzdata`` package on Windows and many CI images."""
+    try:
+        return ZoneInfo(name)
+    except ZoneInfoNotFoundError:
+        raise HTTPException(status_code=400, detail=f"Unknown timezone: {name}") from None
+    except OSError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"Could not load timezone data for {name!r}. "
+                "Install IANA data: pip install tzdata"
+            ),
+        ) from e
+
 app = FastAPI(title="TimeZoneChecker API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -118,10 +134,7 @@ async def search_cities(
 
 
 def _parse_local_in_zone(local_str: str, tz_name: str) -> datetime:
-    try:
-        z = ZoneInfo(tz_name)
-    except ZoneInfoNotFoundError as e:
-        raise HTTPException(status_code=400, detail=f"Unknown timezone: {tz_name}") from e
+    z = _zoneinfo(tz_name)
 
     s = local_str.strip().replace("Z", "")
     if "T" not in s:
@@ -162,7 +175,7 @@ def _format_offset(dt: datetime) -> str:
     total = abs(total)
     h, rem = divmod(total, 3600)
     m, _ = divmod(rem, 60)
-    return f"UTC{sign}{h:d}:{m:02d}"
+    return f"UTC{sign}{h:02d}:{m:02d}"
 
 
 
@@ -170,16 +183,13 @@ def _format_offset(dt: datetime) -> str:
 @app.post("/api/convert", response_model=ConvertResponse)
 def convert_time(req: ConvertRequest) -> ConvertResponse:
     dt_ref = _parse_local_in_zone(req.local_datetime, req.from_timezone)
-    utc = dt_ref.astimezone(ZoneInfo("UTC"))
+    utc = dt_ref.astimezone(_zoneinfo("UTC"))
 
     ref_label = dt_ref.strftime("%Y-%m-%d %H:%M:%S")
     rows: list[ConvertedRow] = []
 
     for tz_name in req.to_timezones:
-        try:
-            z = ZoneInfo(tz_name)
-        except ZoneInfoNotFoundError:
-            raise HTTPException(status_code=400, detail=f"Unknown timezone: {tz_name}") from None
+        z = _zoneinfo(tz_name)
         local = dt_ref.astimezone(z)
         rows.append(
             ConvertedRow(
