@@ -1,0 +1,10 @@
+{
+  "ip": "192.168.1.100",
+  "user": "admin",
+  "password": "your_password",
+  "channel": 1,
+  "stream": "sub",
+  "line_y_ratio": 0.6,
+  "confidence": 0.5,
+  "model_size": "n"
+}
