@@ -95,6 +95,7 @@ export default function App() {
   const [loadingConvert, setLoadingConvert] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
+  const [copyFeedback, setCopyFeedback] = useState('')
 
   const localDatetime = useMemo(() => {
     const hm = normalizeTimeHHMM(refTime)
@@ -244,11 +245,41 @@ export default function App() {
     }
   }, [localDatetime, refCity, validTargets])
 
+  const copyResultsToClipboard = useCallback(async () => {
+    if (!result || !refCity) return
+    const lines = []
+    lines.push(`When it is ${refCity.label} · ${refDisplayDateTime}, elsewhere it is:`)
+    lines.push('')
+    lines.push(`${refCity.label} (${refCity.timezone})`)
+    lines.push(`  ${result.reference_local.split('(')[0].trim()}`)
+    lines.push('')
+    for (const row of result.results) {
+      const label = validTargets.find((t) => t.timezone === row.timezone)?.label || row.timezone
+      lines.push(`${label} (${row.timezone})`)
+      lines.push(`  ${row.local_datetime}  ${row.offset_label}`)
+      lines.push('')
+    }
+    lines.push(`UTC instant: ${result.utc_iso}`)
+    const text = lines.join('\n')
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopyFeedback('Copied to clipboard')
+      window.setTimeout(() => setCopyFeedback(''), 2500)
+    } catch {
+      setCopyFeedback('Could not copy')
+      window.setTimeout(() => setCopyFeedback(''), 3000)
+    }
+  }, [result, refCity, validTargets, refDisplayDateTime])
+
   useEffect(() => {
     if (!result) return
     requestAnimationFrame(() => {
       resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     })
+  }, [result])
+
+  useEffect(() => {
+    if (!result) setCopyFeedback('')
   }, [result])
 
   return (
@@ -482,6 +513,22 @@ export default function App() {
 
             <p className="utc">
               UTC instant: <code>{result.utc_iso}</code>
+            </p>
+
+            <p className="copy-results">
+              <button
+                type="button"
+                className="text-link"
+                onClick={copyResultsToClipboard}
+                aria-label="Copy conversion results to clipboard"
+              >
+                Copy results to clipboard
+              </button>
+              {copyFeedback ? (
+                <span className={`copy-results-status ${copyFeedback === 'Could not copy' ? 'copy-results-status--err' : ''}`} role="status" aria-live="polite">
+                  {copyFeedback}
+                </span>
+              ) : null}
             </p>
 
             <div className="actions">
