@@ -275,6 +275,15 @@ export default function App() {
     if (!result) setCopyFeedback('')
   }, [result])
 
+  /** Auto-run conversion when the form is complete (debounced so date/time typing does not spam the API). */
+  useEffect(() => {
+    if (!canConvert) return
+    const id = window.setTimeout(() => {
+      void runConvert()
+    }, 450)
+    return () => window.clearTimeout(id)
+  }, [canConvert, localDatetime, refCity, validTargets, runConvert])
+
   return (
     <div className="shell">
       <header className="hero">
@@ -458,7 +467,11 @@ export default function App() {
             <p className="convert-hint muted" role="status">
               {convertBlockedReason}
             </p>
-          ) : null}
+          ) : (
+            <p className="convert-hint muted" role="status">
+              Results update automatically when reference city, date &amp; time, and at least one other city are set.
+            </p>
+          )}
       </section>
 
       <section ref={resultsRef} className="card" id="section-results" tabIndex={-1}>
