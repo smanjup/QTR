@@ -4,6 +4,7 @@ TimeZoneChecker API — city search (Open-Meteo geocoding) and timezone conversi
 
 from __future__ import annotations
 
+import importlib.util
 from datetime import datetime
 from typing import Any
 
@@ -27,6 +28,15 @@ def _zoneinfo(name: str) -> ZoneInfo:
     try:
         return ZoneInfo(s)
     except ZoneInfoNotFoundError:
+        # On Windows, zoneinfo often has no IANA files unless the tzdata package is installed.
+        if importlib.util.find_spec("tzdata") is None:
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    f"Could not load timezone {s!r}. The IANA database is missing. "
+                    "Install: pip install tzdata (use the same venv as uvicorn), then restart the API."
+                ),
+            ) from None
         raise HTTPException(status_code=400, detail=f"Unknown timezone: {s}") from None
     except OSError as e:
         raise HTTPException(
