@@ -23,6 +23,13 @@ function formatApiDetail(detail) {
   return String(detail)
 }
 
+function escapeHtml(text) {
+  if (text == null) return ''
+  const el = document.createElement('div')
+  el.textContent = String(text)
+  return el.innerHTML
+}
+
 async function convert(body) {
   const r = await fetch(`${API}/convert`, {
     method: 'POST',
@@ -79,6 +86,7 @@ function dateToNaiveParts(d) {
 
 export default function App() {
   const resultsRef = useRef(null)
+  const targetInputRef = useRef(null)
   const refBlurTimerRef = useRef(null)
   const targetBlurTimerRef = useRef(null)
 
@@ -92,7 +100,6 @@ export default function App() {
   const [targetInputFocused, setTargetInputFocused] = useState(false)
   const [targets, setTargets] = useState([])
 
-  const [loadingConvert, setLoadingConvert] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
   const [copyFeedback, setCopyFeedback] = useState('')
@@ -150,7 +157,7 @@ export default function App() {
     }
     if (!refDate || !refTime) return 'Set date and time in Step 1.'
     if (validTargets.length === 0) {
-      return 'Add at least one city in Step 2: click the field, type to filter major cities, then pick one from the list.'
+      return 'Add at least one comparison city: click the field, type to filter major cities, then pick one from the list.'
     }
     return null
   }, [refCity, refTz, refDate, refTime, validTargets.length])
@@ -201,12 +208,18 @@ export default function App() {
   const addTarget = useCallback((hit) => {
     const tz = typeof hit.timezone === 'string' ? hit.timezone.trim() : ''
     if (!tz) return
+    if (targetBlurTimerRef.current) {
+      window.clearTimeout(targetBlurTimerRef.current)
+      targetBlurTimerRef.current = null
+    }
     setTargets((prev) => {
       if (prev.some((p) => p.timezone === tz)) return prev
       return [...prev, { label: hit.label, timezone: tz }]
     })
     setTargetQuery('')
-    setTargetInputFocused(false)
+    queueMicrotask(() => {
+      targetInputRef.current?.focus()
+    })
   }, [])
 
   const removeTarget = useCallback((tz) => {
@@ -215,7 +228,6 @@ export default function App() {
 
   const runConvert = useCallback(async () => {
     setError('')
-    setLoadingConvert(true)
     try {
       const fromTz = refCity?.timezone?.trim?.() ?? ''
       const toTzs = validTargets.map((t) => t.timezone.trim())
@@ -240,8 +252,6 @@ export default function App() {
           ? 'Cannot reach the API. Start the backend (e.g. uvicorn on port 8001) and use the Vite dev server so /api is proxied.'
           : m,
       )
-    } finally {
-      setLoadingConvert(false)
     }
   }, [localDatetime, refCity, validTargets])
 
@@ -253,14 +263,48 @@ export default function App() {
       const label = validTargets.find((t) => t.timezone === row.timezone)?.label || row.timezone
       lines.push(`${label}: ${row.local_datetime}`)
     }
-    const text = lines.join('\n')
+    const plainText = lines.join('\n')
+
+    const tzSub = (tz) =>
+      `<span style="font-size:0.85em;color:#555">${escapeHtml(tz)}</span>`
+    const cellPlace = (name, tz) =>
+      `${escapeHtml(name)}<br/>${tzSub(tz)}`
+
+    const rowHtml = []
+    rowHtml.push(
+      `<tr><td>${cellPlace(refCity.label, refCity.timezone)}</td><td>${escapeHtml(refTime)}</td><td>—</td></tr>`,
+    )
+    for (const row of result.results) {
+      const label = validTargets.find((t) => t.timezone === row.timezone)?.label || row.timezone
+      rowHtml.push(
+        `<tr><td>${cellPlace(label, row.timezone)}</td><td>${escapeHtml(row.local_datetime)}</td><td>${escapeHtml(row.offset_label)}</td></tr>`,
+      )
+    }
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body><table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;font-family:system-ui,sans-serif;font-size:14px"><thead><tr><th align="left">Place (IANA zone)</th><th align="left">Local date &amp; time</th><th align="left">Offset</th></tr></thead><tbody>${rowHtml.join('')}</tbody></table></body></html>`
+
     try {
-      await navigator.clipboard.writeText(text)
+      if (navigator.clipboard?.write && window.ClipboardItem) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html': new Blob([html], { type: 'text/html;charset=utf-8' }),
+            'text/plain': new Blob([plainText], { type: 'text/plain;charset=utf-8' }),
+          }),
+        ])
+      } else {
+        await navigator.clipboard.writeText(plainText)
+      }
       setCopyFeedback('Copied to clipboard')
       window.setTimeout(() => setCopyFeedback(''), 2500)
     } catch {
-      setCopyFeedback('Could not copy')
-      window.setTimeout(() => setCopyFeedback(''), 3000)
+      try {
+        await navigator.clipboard.writeText(plainText)
+        setCopyFeedback('Copied to clipboard')
+        window.setTimeout(() => setCopyFeedback(''), 2500)
+      } catch {
+        setCopyFeedback('Could not copy')
+        window.setTimeout(() => setCopyFeedback(''), 3000)
+      }
     }
   }, [result, refCity, validTargets])
 
@@ -393,15 +437,17 @@ export default function App() {
           </div>
       </section>
 
-      <section className="card" id="section-targets">
-        <h2>Step 2 — Other cities</h2>
+      <section ref={resultsRef} className="card" id="section-compare-results" tabIndex={-1}>
+        <h2>Compare &amp; local times</h2>
           <p className="hint">
-            Add one or more major cities to compare. Duplicates by timezone are skipped.
+            Add one or more major cities to compare. Duplicates by timezone are skipped. Local times appear below when
+            everything is set in Step 1 and here.
           </p>
 
           <label className="field field-city">
             <span id="label-target-city">Add city</span>
             <input
+              ref={targetInputRef}
               type="text"
               autoComplete="off"
               spellCheck={false}
@@ -453,16 +499,6 @@ export default function App() {
             )}
           </div>
 
-          <div className="actions">
-            <button
-              type="button"
-              className="primary"
-              disabled={!canConvert || loadingConvert}
-              onClick={runConvert}
-            >
-              {loadingConvert ? 'Converting…' : 'Convert'}
-            </button>
-          </div>
           {convertBlockedReason ? (
             <p className="convert-hint muted" role="status">
               {convertBlockedReason}
@@ -472,13 +508,9 @@ export default function App() {
               Results update automatically when reference city, date &amp; time, and at least one other city are set.
             </p>
           )}
-      </section>
-
-      <section ref={resultsRef} className="card" id="section-results" tabIndex={-1}>
-        <h2>Step 3 — Local times</h2>
 
         {result && refCity ? (
-          <>
+          <div className="results-panel">
             <p className="summary">
               When it is{' '}
               <strong>
@@ -552,11 +584,11 @@ export default function App() {
                 Start over
               </button>
             </div>
-          </>
+          </div>
         ) : (
           <p className="muted results-placeholder">
-            Results appear here after you choose a reference city and time, add at least one other city in step 2, and
-            click <strong>Convert</strong>.
+            Local times appear here after you set a reference city and time in Step 1, add at least one city above, and
+            the form is complete (updates run automatically).
           </p>
         )}
       </section>

@@ -35,7 +35,7 @@
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 1.5rem 1.35rem 1.35rem;
-  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 40px rgba(42, 38, 34, 0.09);
 }
 
 .card + .card {
@@ -124,7 +124,7 @@
 }
 
 .hits li button:hover {
-  background: rgba(232, 184, 74, 0.08);
+  background: rgba(107, 93, 76, 0.08);
 }
 
 .hits-empty {
@@ -158,8 +158,8 @@
 }
 
 button.primary {
-  background: linear-gradient(135deg, var(--accent), var(--accent-dim));
-  color: #1a1410;
+  background: linear-gradient(135deg, #d4c4b0, #a89884);
+  color: #2a2622;
   border: none;
   border-radius: 999px;
   padding: 0.65rem 1.35rem;
@@ -218,9 +218,9 @@ button.ghost:hover {
 }
 
 .banner.error {
-  background: rgba(240, 128, 112, 0.12);
-  border: 1px solid rgba(240, 128, 112, 0.45);
-  color: #ffc9c0;
+  background: rgba(180, 83, 9, 0.08);
+  border: 1px solid rgba(180, 83, 9, 0.28);
+  color: var(--danger);
   padding: 0.75rem 1rem;
   border-radius: 10px;
   margin-bottom: 1rem;
@@ -234,8 +234,16 @@ button.ghost:hover {
   max-width: 52ch;
 }
 
+.results-panel {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
 .results-placeholder {
-  margin: 0.35rem 0 0;
+  margin: 1.25rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
   max-width: 48ch;
   line-height: 1.55;
   font-size: 0.95rem;
@@ -273,7 +281,7 @@ button.ghost:hover {
 }
 
 .ref-row td {
-  background: rgba(232, 184, 74, 0.06);
+  background: rgba(107, 93, 76, 0.07);
 }
 
 .utc {
@@ -320,7 +328,7 @@ button.ghost:hover {
   color: var(--muted);
 }
 
-/* react-datepicker — match form fields + dark popup */
+/* react-datepicker — match form fields + cream popup */
 .datetime-picker-wrap {
   width: 100%;
   display: flex;
@@ -382,7 +390,7 @@ button.ghost:hover {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 16px 48px rgba(42, 38, 34, 0.12);
   color: var(--text);
 }
 
@@ -409,13 +417,13 @@ button.ghost:hover {
 }
 
 .tz-datepicker-popper .react-datepicker__day:hover {
-  background: rgba(232, 184, 74, 0.15);
+  background: rgba(107, 93, 76, 0.1);
 }
 
 .tz-datepicker-popper .react-datepicker__day--selected,
 .tz-datepicker-popper .react-datepicker__day--keyboard-selected {
   background: var(--accent) !important;
-  color: #1a1410 !important;
+  color: var(--on-accent) !important;
   font-weight: 700;
 }
 
@@ -450,12 +458,12 @@ button.ghost:hover {
 }
 
 .tz-datepicker-popper .react-datepicker__time-list-item:hover {
-  background: rgba(232, 184, 74, 0.12);
+  background: rgba(107, 93, 76, 0.1);
 }
 
 .tz-datepicker-popper .react-datepicker__time-list-item--selected {
   background: var(--accent) !important;
-  color: #1a1410 !important;
+  color: var(--on-accent) !important;
   font-weight: 700;
 }
 

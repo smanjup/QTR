@@ -1,6 +1,6 @@
-# TimeZoneChecker — “What time is the time there”
+# TimeZoneChecker — “What is the time there”
 
-Three-step web app: choose a **reference city**, enter **local date & time**, add **other cities**, then see those moments as **local wall times** in each place (DST-aware), similar in spirit to [World Time Buddy](https://www.worldtimebuddy.com/).
+Web app: choose a **reference city**, enter **local date & time**, add **other cities**, then see those moments as **local wall times** in each place (DST-aware), similar in spirit to [World Time Buddy](https://www.worldtimebuddy.com/).
 
 - **Frontend:** React (Vite) — `frontend/`
 - **Backend:** Python (FastAPI) — `backend/`
@@ -43,6 +43,10 @@ npm run build
 ```
 
 Serve `frontend/dist` with any static host; configure that host to reverse-proxy `/api` to your FastAPI service, or set a full API base URL in the client if you split origins.
+
+## Deployment (Vercel)
+
+See **[docs/deployment.md](docs/deployment.md)** for Vercel project settings, CLI deploy, and troubleshooting.
 
 ## Repository
 

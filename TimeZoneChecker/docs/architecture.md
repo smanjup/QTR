@@ -49,7 +49,7 @@ sequenceDiagram
   F->>TZ: Parse wall time in from_timezone, convert to UTC + target zones
   TZ-->>F: UTC instant + local rows
   F-->>R: JSON (utc_iso, reference_local, results)
-  R-->>U: Table in Step 3
+  R-->>U: Table in compare & local times section
 ```
 
 ## Components
