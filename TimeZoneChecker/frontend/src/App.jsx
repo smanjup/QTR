@@ -124,22 +124,33 @@ export default function App() {
     return d
   }, [refDate, refTime])
 
-  const refReady = refCity && refDate && refTime
-  const canConvert = refReady && targets.length > 0
+  const refTz = refCity?.timezone?.trim?.() ?? ''
+  const refReady = refCity && refTz.length > 0 && refDate && refTime
+
+  const validTargets = useMemo(
+    () => targets.filter((t) => typeof t.timezone === 'string' && t.timezone.trim().length > 0),
+    [targets],
+  )
+  const canConvert = refReady && validTargets.length > 0
 
   const convertBlockedReason = useMemo(() => {
     if (!refCity) {
       return 'Pick a reference city in Step 1: click the field, type to filter major cities, then choose one from the list (typing alone is not enough).'
     }
+    if (!refTz) {
+      return 'Reference city is missing a timezone. Pick the city again from the list.'
+    }
     if (!refDate || !refTime) return 'Set date and time in Step 1.'
-    if (targets.length === 0) {
+    if (validTargets.length === 0) {
       return 'Add at least one city in Step 2: click the field, type to filter major cities, then pick one from the list.'
     }
     return null
-  }, [refCity, refDate, refTime, targets.length])
+  }, [refCity, refTz, refDate, refTime, validTargets.length])
 
   const pickRef = useCallback((hit) => {
-    setRefCity({ label: hit.label, timezone: hit.timezone })
+    const tz = typeof hit.timezone === 'string' ? hit.timezone.trim() : ''
+    if (!tz) return
+    setRefCity({ label: hit.label, timezone: tz })
     setRefQuery(hit.label)
     setRefInputFocused(false)
   }, [])
@@ -180,9 +191,11 @@ export default function App() {
     targetInputFocused && targetQuery.trim().length >= 1 && targetCitySuggestions.length === 0
 
   const addTarget = useCallback((hit) => {
+    const tz = typeof hit.timezone === 'string' ? hit.timezone.trim() : ''
+    if (!tz) return
     setTargets((prev) => {
-      if (prev.some((p) => p.timezone === hit.timezone)) return prev
-      return [...prev, { label: hit.label, timezone: hit.timezone }]
+      if (prev.some((p) => p.timezone === tz)) return prev
+      return [...prev, { label: hit.label, timezone: tz }]
     })
     setTargetQuery('')
     setTargetInputFocused(false)
@@ -196,9 +209,18 @@ export default function App() {
     setError('')
     setLoadingConvert(true)
     try {
-      const toTzs = targets.map((t) => t.timezone)
+      const fromTz = refCity?.timezone?.trim?.() ?? ''
+      const toTzs = validTargets.map((t) => t.timezone.trim())
+      if (!fromTz) {
+        setError('Reference city has no timezone. Choose a city again from the list.')
+        return
+      }
+      if (toTzs.length === 0) {
+        setError('Add at least one comparison city with a valid timezone.')
+        return
+      }
       const data = await convert({
-        from_timezone: refCity.timezone,
+        from_timezone: fromTz,
         local_datetime: localDatetime,
         to_timezones: toTzs,
       })
@@ -213,7 +235,7 @@ export default function App() {
     } finally {
       setLoadingConvert(false)
     }
-  }, [localDatetime, refCity, targets])
+  }, [localDatetime, refCity, validTargets])
 
   useEffect(() => {
     if (!result) return
@@ -226,7 +248,7 @@ export default function App() {
     <div className="shell">
       <header className="hero">
         <p className="eyebrow">TimeZoneChecker</p>
-        <h1 className="title">What time is the time there</h1>
+        <h1 className="title">What is the time there</h1>
         <p className="lede">
           Pick a city and a local time, add other places, and see those moments on their clocks.
         </p>
@@ -377,10 +399,10 @@ export default function App() {
           </label>
 
           <div className="chips">
-            {targets.length === 0 ? (
+            {validTargets.length === 0 ? (
               <p className="muted">No cities yet.</p>
             ) : (
-              targets.map((t) => (
+              validTargets.map((t) => (
                 <button key={t.timezone} type="button" className="chip" onClick={() => removeTarget(t.timezone)}>
                   {t.label}
                   <span className="x" aria-hidden>
@@ -441,7 +463,7 @@ export default function App() {
                 {result.results.map((row) => (
                   <tr key={row.timezone}>
                     <td>
-                      {targets.find((t) => t.timezone === row.timezone)?.label || row.timezone}
+                      {validTargets.find((t) => t.timezone === row.timezone)?.label || row.timezone}
                       <div className="tz">{row.timezone}</div>
                     </td>
                     <td>{row.local_datetime}</td>

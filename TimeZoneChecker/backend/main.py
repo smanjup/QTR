@@ -18,10 +18,16 @@ OPEN_METEO_GEO = "https://geocoding-api.open-meteo.com/v1/search"
 
 def _zoneinfo(name: str) -> ZoneInfo:
     """Load IANA zone; needs the ``tzdata`` package on Windows and many CI images."""
+    s = (name or "").strip()
+    if not s:
+        raise HTTPException(
+            status_code=400,
+            detail="Timezone name cannot be empty. Choose a city from the list so an IANA zone is set.",
+        )
     try:
-        return ZoneInfo(name)
+        return ZoneInfo(s)
     except ZoneInfoNotFoundError:
-        raise HTTPException(status_code=400, detail=f"Unknown timezone: {name}") from None
+        raise HTTPException(status_code=400, detail=f"Unknown timezone: {s}") from None
     except OSError as e:
         raise HTTPException(
             status_code=503,
