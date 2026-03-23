@@ -194,6 +194,9 @@ def _format_offset(dt: datetime) -> str:
     return f"UTC{sign}{h:02d}:{m:02d}"
 
 
+def _format_local_12h(dt: datetime) -> str:
+    """Local wall time in 12-hour (standard) form with AM/PM."""
+    return dt.strftime("%Y-%m-%d %I:%M:%S %p")
 
 
 @app.post("/api/convert", response_model=ConvertResponse)
@@ -201,7 +204,7 @@ def convert_time(req: ConvertRequest) -> ConvertResponse:
     dt_ref = _parse_local_in_zone(req.local_datetime, req.from_timezone)
     utc = dt_ref.astimezone(_zoneinfo("UTC"))
 
-    ref_label = dt_ref.strftime("%Y-%m-%d %H:%M:%S")
+    ref_label = _format_local_12h(dt_ref)
     rows: list[ConvertedRow] = []
 
     for tz_name in req.to_timezones:
@@ -210,7 +213,7 @@ def convert_time(req: ConvertRequest) -> ConvertResponse:
         rows.append(
             ConvertedRow(
                 timezone=tz_name,
-                local_datetime=local.strftime("%Y-%m-%d %H:%M:%S"),
+                local_datetime=_format_local_12h(local),
                 offset_label=_format_offset(local),
             )
         )

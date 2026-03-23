@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { isValid as isValidDate } from 'date-fns'
+import { format, isValid as isValidDate } from 'date-fns'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { MAJOR_CITIES } from './data/majorCities.js'
@@ -122,6 +122,13 @@ export default function App() {
     const d = naivePartsToDate(refDate, refTime)
     if (!isValidDate(d)) return naivePartsToDate(todayISODate(), '12:00')
     return d
+  }, [refDate, refTime])
+
+  /** 12-hour display for summary (API still uses 24h local_datetime string in request). */
+  const refDisplayDateTime = useMemo(() => {
+    const d = naivePartsToDate(refDate, refTime)
+    if (!isValidDate(d)) return ''
+    return format(d, 'yyyy-MM-dd h:mm:ss a')
   }, [refDate, refTime])
 
   const refTz = refCity?.timezone?.trim?.() ?? ''
@@ -332,8 +339,8 @@ export default function App() {
               }}
               showTimeSelect
               timeIntervals={15}
-              dateFormat="yyyy-MM-dd HH:mm"
-              timeFormat="HH:mm"
+              dateFormat="yyyy-MM-dd h:mm aa"
+              timeFormat="h:mm aa"
               timeCaption="Time"
               placeholderText="Pick date & time"
               ariaLabelledBy="label-ref-datetime"
@@ -348,7 +355,7 @@ export default function App() {
               autoComplete="off"
             />
             <p className="mini datetime-picker-hint">
-              Use the calendar icon or click the field for a popup; the value is editable as text.
+              Times use 12-hour (AM/PM). Use the calendar icon or click the field; the value is editable as text.
             </p>
           </div>
       </section>
@@ -438,7 +445,7 @@ export default function App() {
             <p className="summary">
               When it is{' '}
               <strong>
-                {refCity.label} · {localDatetime.replace('T', ' ')}
+                {refCity.label} · {refDisplayDateTime}
               </strong>
               , elsewhere it is:
             </p>
