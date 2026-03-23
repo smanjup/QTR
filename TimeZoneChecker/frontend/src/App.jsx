@@ -247,19 +247,12 @@ export default function App() {
 
   const copyResultsToClipboard = useCallback(async () => {
     if (!result || !refCity) return
-    const lines = []
-    lines.push(`When it is ${refCity.label} · ${refDisplayDateTime}, elsewhere it is:`)
-    lines.push('')
-    lines.push(`${refCity.label} (${refCity.timezone})`)
-    lines.push(`  ${result.reference_local.split('(')[0].trim()}`)
-    lines.push('')
+    const refTime = result.reference_local.split('(')[0].trim()
+    const lines = [`${refCity.label}: ${refTime}`]
     for (const row of result.results) {
       const label = validTargets.find((t) => t.timezone === row.timezone)?.label || row.timezone
-      lines.push(`${label} (${row.timezone})`)
-      lines.push(`  ${row.local_datetime}  ${row.offset_label}`)
-      lines.push('')
+      lines.push(`${label}: ${row.local_datetime}`)
     }
-    lines.push(`UTC instant: ${result.utc_iso}`)
     const text = lines.join('\n')
     try {
       await navigator.clipboard.writeText(text)
@@ -269,7 +262,7 @@ export default function App() {
       setCopyFeedback('Could not copy')
       window.setTimeout(() => setCopyFeedback(''), 3000)
     }
-  }, [result, refCity, validTargets, refDisplayDateTime])
+  }, [result, refCity, validTargets])
 
   useEffect(() => {
     if (!result) return
