@@ -13,6 +13,12 @@ export default function Layout() {
         <NavLink to="/tree" className={({ isActive }) => (isActive ? 'active' : '')}>
           Tree
         </NavLink>
+        <NavLink to="/treewithlove" className={({ isActive }) => (isActive ? 'active' : '')}>
+          Tree with love
+        </NavLink>
+        <NavLink to="/barnsley" className={({ isActive }) => (isActive ? 'active' : '')}>
+          Barnsley fern
+        </NavLink>
       </nav>
       <Outlet />
     </div>
