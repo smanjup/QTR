@@ -47,9 +47,8 @@ Serve `frontend/dist` behind a host that reverse-proxies **`/api`** to the same 
 
 ## Deploy on Vercel
 
-This folder includes **`vercel.json`**, **`api/index.py`** (FastAPI ASGI entry), and a root **`requirements.txt`** for the Python serverless function.
+**Easiest:** Import the **`QTR`** repo in Vercel with **Root Directory = `.`** (repo root). The repository has **`vercel.json`**, **`api/index.py`**, and **`requirements.txt`** at the top level so Fractal Lab builds without changing Root Directory.
 
-1. In [Vercel](https://vercel.com), **Add New Project** and import the **`smanjup/QTR`** GitHub repo (or push these files and connect the repo you use).
-2. Set **Root Directory** to **`fractal-lab`** (required when the repo contains more than this app).
-3. Deploy with defaults; Vercel will run `npm ci` / `npm run build` in `frontend/`, serve `frontend/dist`, route **`/api/*`** to the Python function, and fall back to **`index.html`** for client-side routes (`/julia`, `/barnsley`, etc.).
-4. Heavy renders (large Mandelbrot / many Barnsley points) can approach the **60s** function limit; reduce resolution or iterations if a request times out.
+**Alternative:** Set **Root Directory** to **`fractal-lab`** and use the duplicate **`vercel.json`** / **`api/index.py`** inside this folder.
+
+Heavy renders can approach the **60s** serverless limit; reduce resolution or iterations if a request times out.

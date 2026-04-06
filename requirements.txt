@@ -1,0 +1,5 @@
+# Vercel serverless (api/) — Fractal Lab backend
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+numpy>=2.0.0
+pillow>=10.0.0
